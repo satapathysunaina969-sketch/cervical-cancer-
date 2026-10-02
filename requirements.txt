@@ -3,6 +3,8 @@ scikit-learn==1.6.1
 joblib
 pandas
 numpy
+pandas
+numpy
 streamlit
 scikit-learn==1.6.1
 joblib
