@@ -180,3 +180,82 @@ with tab2:
 
     with st.expander("View raw data table"):
         st.dataframe(data[data["Year"] == selected_year].sort_values(value_col, ascending=False), use_container_width=True)
+        import joblib
+import pandas as pd
+import streamlit as st
+from google import genai
+
+# Page Config
+st.set_page_config(
+    page_title="Cervical Health AI Assistant", page_icon="🩺", layout="wide"
+)
+
+# 1. Initialize Gemini Client safely using Streamlit Secrets
+@st.cache_resource
+def get_gemini_client():
+    return genai.Client(api_key=st.secrets["GEMINI_API_KEY"])
+
+
+client = get_gemini_client()
+
+# 2. Load ML Model & Scaler
+@st.cache_resource
+def load_ml_pipeline():
+    model = joblib.load("cervical_model.joblib")
+    scaler = joblib.load("cervical_scaler.joblib")
+    return model, scaler
+
+
+try:
+    model, scaler = load_ml_pipeline()
+except Exception:
+    model, scaler = None, None
+
+st.title("🩺 Cervical Health AI Assistant")
+st.caption(
+    "Conversational AI for Cervical Cancer Risk Assessment & Epidemiological Insights"
+)
+
+# 3. Maintain Chat History
+if "messages" not in st.session_state:
+    st.session_state.messages = [
+        {
+            "role": "assistant",
+            "content": "Hello! I am your Cervical Health Assistant. You can describe your demographic/health background for a risk estimation, or ask about cervical cancer stats in India.",
+        }
+    ]
+
+# Display prior messages
+for msg in st.session_state.messages:
+    with st.chat_message(msg["role"]):
+        st.markdown(msg["content"])
+
+# 4. Handle Chat Input
+if user_prompt := st.chat_input("Type your message or health details here..."):
+    # Display User Input
+    st.session_state.messages.append({"role": "user", "content": user_prompt})
+    with st.chat_message("user"):
+        st.markdown(user_prompt)
+
+    # Generate Response using Gemini 3.8 Flash
+    with st.chat_message("assistant"):
+        with st.spinner("Thinking..."):
+            try:
+                response = client.models.generate_content(
+                    model="gemini-3.8-flash",
+                    contents=f"""
+                    You are a supportive clinical information assistant specializing in cervical health and epidemiology education.
+                    Respond directly and helpfully to: '{user_prompt}'.
+                    Remind users gently that statistical risk tools do not replace clinical screening or medical professional advice.
+                    """,
+                )
+                assistant_text = response.text
+            except Exception as err:
+                assistant_text = (
+                    f"I encountered an issue processing your request: {err}"
+                )
+
+            st.markdown(assistant_text)
+            st.session_state.messages.append(
+                {"role": "assistant", "content": assistant_text}
+            )
