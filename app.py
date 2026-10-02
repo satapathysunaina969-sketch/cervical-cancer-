@@ -1,4 +1,5 @@
-import streamlit as st
+
+      import streamlit as st
 import pandas as pd
 import joblib
 
@@ -23,43 +24,43 @@ st.write("Please fill in the fields below as accurately as you can.")
 
 # --- Demographics ---
 st.subheader("Demographics")
-age = st.number_input("Age", min_value=10, max_value=100, value=30)
-partners = st.number_input("Number of sexual partners", min_value=0, max_value=50, value=1)
-first_intercourse = st.number_input("Age at first sexual intercourse", min_value=0, max_value=50, value=18)
-pregnancies = st.number_input("Number of pregnancies", min_value=0, max_value=20, value=0)
+age = st.number_input("Age", min_value=10, max_value=100, value=30, key="age")
+partners = st.number_input("Number of sexual partners", min_value=0, max_value=50, value=1, key="partners")
+first_intercourse = st.number_input("Age at first sexual intercourse", min_value=0, max_value=50, value=18, key="first_intercourse")
+pregnancies = st.number_input("Number of pregnancies", min_value=0, max_value=20, value=0, key="pregnancies")
 
 # --- Habits ---
 st.subheader("Habits")
-smokes = st.checkbox("Do you smoke?")
-smokes_years = st.number_input("If yes, for how many years?", min_value=0.0, max_value=60.0, value=0.0)
-smokes_packs = st.number_input("If yes, packs per year", min_value=0.0, max_value=50.0, value=0.0)
+smokes = st.checkbox("Do you smoke?", key="smokes")
+smokes_years = st.number_input("If yes, for how many years?", min_value=0.0, max_value=60.0, value=0.0, key="smokes_years")
+smokes_packs = st.number_input("If yes, packs per year", min_value=0.0, max_value=50.0, value=0.0, key="smokes_packs")
 
 # --- Contraceptive history ---
 st.subheader("Contraceptive History")
-hormonal = st.checkbox("Have you used hormonal contraceptives?")
-hormonal_years = st.number_input("If yes, for how many years?", min_value=0.0, max_value=40.0, value=0.0)
-iud = st.checkbox("Have you used an IUD?")
-iud_years = st.number_input("If yes, for how many years?", min_value=0.0, max_value=40.0, value=0.0)
+hormonal = st.checkbox("Have you used hormonal contraceptives?", key="hormonal")
+hormonal_years = st.number_input("If yes, for how many years?", min_value=0.0, max_value=40.0, value=0.0, key="hormonal_years")
+iud = st.checkbox("Have you used an IUD?", key="iud")
+iud_years = st.number_input("If yes, for how many years?", min_value=0.0, max_value=40.0, value=0.0, key="iud_years")
 
 # --- STD history ---
 st.subheader("STD History")
-stds = st.checkbox("Have you ever been diagnosed with an STD?")
-stds_number = st.number_input("If yes, how many different STDs in total?", min_value=0, max_value=10, value=0)
+stds = st.checkbox("Have you ever been diagnosed with an STD?", key="stds")
+stds_number = st.number_input("If yes, how many different STDs in total?", min_value=0, max_value=10, value=0, key="stds_number")
 
 st.caption("Tick any that apply:")
-condylomatosis = st.checkbox("Condylomatosis")
-cervical_condylomatosis = st.checkbox("Cervical condylomatosis")
-vaginal_condylomatosis = st.checkbox("Vaginal condylomatosis")
-vulvo_perineal_condylomatosis = st.checkbox("Vulvo-perineal condylomatosis")
-syphilis = st.checkbox("Syphilis")
-pid = st.checkbox("Pelvic inflammatory disease")
-genital_herpes = st.checkbox("Genital herpes")
-molluscum = st.checkbox("Molluscum contagiosum")
-aids = st.checkbox("AIDS")
-hiv = st.checkbox("HIV")
-hep_b = st.checkbox("Hepatitis B")
-hpv = st.checkbox("HPV")
-stds_diagnosis_count = st.number_input("Total number of STD diagnoses received", min_value=0, max_value=20, value=0)
+condylomatosis = st.checkbox("Condylomatosis", key="condylomatosis")
+cervical_condylomatosis = st.checkbox("Cervical condylomatosis", key="cervical_condylomatosis")
+vaginal_condylomatosis = st.checkbox("Vaginal condylomatosis", key="vaginal_condylomatosis")
+vulvo_perineal_condylomatosis = st.checkbox("Vulvo-perineal condylomatosis", key="vulvo_perineal_condylomatosis")
+syphilis = st.checkbox("Syphilis", key="syphilis")
+pid = st.checkbox("Pelvic inflammatory disease", key="pid")
+genital_herpes = st.checkbox("Genital herpes", key="genital_herpes")
+molluscum = st.checkbox("Molluscum contagiosum", key="molluscum")
+aids = st.checkbox("AIDS", key="aids")
+hiv = st.checkbox("HIV", key="hiv")
+hep_b = st.checkbox("Hepatitis B", key="hep_b")
+hpv = st.checkbox("HPV", key="hpv")
+stds_diagnosis_count = st.number_input("Total number of STD diagnoses received", min_value=0, max_value=20, value=0, key="stds_diagnosis_count")
 
 # --- Predict button ---
 if st.button("Check Risk Pattern"):
