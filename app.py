@@ -184,10 +184,6 @@ with tab2:
 import pandas as pd
 import streamlit as st
 from google import genai
-import joblib
-import pandas as pd
-import streamlit as st
-from google import genai
 
 # Page Config
 st.set_page_config(
@@ -239,35 +235,38 @@ if user_prompt := st.chat_input("Type your message or health details here..."):
     with st.chat_message("user"):
         st.markdown(user_prompt)
 
-    # Generate Response using Gemini (with model fallback handling)
+    # Generate Streaming Response using Gemini
     with st.chat_message("assistant"):
-        with st.spinner("Thinking..."):
-            prompt_content = f"""
-            You are a supportive clinical information assistant specializing in cervical health and epidemiology education.
-            Respond directly and helpfully to: '{user_prompt}'.
-            Remind users gently that statistical risk tools do not replace clinical screening or medical professional advice.
-            """
-            
-            # Primary model with fallback model list
-            models_to_try = ["gemini-3.8-flash", "gemini-3.5-flash-lite"]
-            assistant_text = ""
-            
-            for model_name in models_to_try:
-                try:
-                    response = client.models.generate_content(
-                        model=model_name,
-                        contents=prompt_content,
-                    )
-                    assistant_text = response.text
-                    break  # Break out if request succeeds
-                except Exception:
-                    continue  # Try next model if server is busy
-            
-            if not assistant_text:
-                assistant_text = "The servers are currently experiencing high demand. Please try sending your query once more in a few seconds."
+        prompt_content = f"""
+        You are a supportive clinical information assistant specializing in cervical health and epidemiology education.
+        Respond directly, empathetically, and concisely to: '{user_prompt}'.
+        Remind users gently that statistical risk tools and AI do not replace clinical screening or medical professional advice.
+        """
 
-            st.markdown(assistant_text)
-            st.session_state.messages.append(
-                {"role": "assistant", "content": assistant_text}
-            )
+        def stream_generator():
+            try:
+                # Streaming response chunk by chunk
+                response_stream = client.models.generate_content_stream(
+                    model="gemini-3.8-flash",
+                    contents=prompt_content,
+                )
+                for chunk in response_stream:
+                    if chunk.text:
+                        yield chunk.text
+            except Exception:
+                # Fallback model if primary is busy
+                response_stream = client.models.generate_content_stream(
+                    model="gemini-3.5-flash-lite",
+                    contents=prompt_content,
+                )
+                for chunk in response_stream:
+                    if chunk.text:
+                        yield chunk.text
+
+        # Use Streamlit's write_stream to display words in real-time
+        assistant_text = st.write_stream(stream_generator)
+        st.session_state.messages.append(
+            {"role": "assistant", "content": assistant_text}
+        )
+            
 
