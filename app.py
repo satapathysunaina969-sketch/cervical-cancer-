@@ -184,6 +184,10 @@ with tab2:
 import pandas as pd
 import streamlit as st
 from google import genai
+import joblib
+import pandas as pd
+import streamlit as st
+from google import genai
 
 # Page Config
 st.set_page_config(
@@ -195,7 +199,6 @@ st.set_page_config(
 def get_gemini_client():
     return genai.Client(api_key=st.secrets["GEMINI_API_KEY"])
 
-
 client = get_gemini_client()
 
 # 2. Load ML Model & Scaler
@@ -204,7 +207,6 @@ def load_ml_pipeline():
     model = joblib.load("cervical_model.joblib")
     scaler = joblib.load("cervical_scaler.joblib")
     return model, scaler
-
 
 try:
     model, scaler = load_ml_pipeline()
@@ -237,25 +239,35 @@ if user_prompt := st.chat_input("Type your message or health details here..."):
     with st.chat_message("user"):
         st.markdown(user_prompt)
 
-    # Generate Response using Gemini 3.8 Flash
+    # Generate Response using Gemini (with model fallback handling)
     with st.chat_message("assistant"):
         with st.spinner("Thinking..."):
-            try:
-                response = client.models.generate_content(
-                    model="gemini-3.8-flash",
-                    contents=f"""
-                    You are a supportive clinical information assistant specializing in cervical health and epidemiology education.
-                    Respond directly and helpfully to: '{user_prompt}'.
-                    Remind users gently that statistical risk tools do not replace clinical screening or medical professional advice.
-                    """,
-                )
-                assistant_text = response.text
-            except Exception as err:
-                assistant_text = (
-                    f"I encountered an issue processing your request: {err}"
-                )
+            prompt_content = f"""
+            You are a supportive clinical information assistant specializing in cervical health and epidemiology education.
+            Respond directly and helpfully to: '{user_prompt}'.
+            Remind users gently that statistical risk tools do not replace clinical screening or medical professional advice.
+            """
+            
+            # Primary model with fallback model list
+            models_to_try = ["gemini-3.8-flash", "gemini-3.5-flash-lite"]
+            assistant_text = ""
+            
+            for model_name in models_to_try:
+                try:
+                    response = client.models.generate_content(
+                        model=model_name,
+                        contents=prompt_content,
+                    )
+                    assistant_text = response.text
+                    break  # Break out if request succeeds
+                except Exception:
+                    continue  # Try next model if server is busy
+            
+            if not assistant_text:
+                assistant_text = "The servers are currently experiencing high demand. Please try sending your query once more in a few seconds."
 
             st.markdown(assistant_text)
             st.session_state.messages.append(
                 {"role": "assistant", "content": assistant_text}
             )
+
