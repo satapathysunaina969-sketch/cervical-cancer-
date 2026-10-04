@@ -221,14 +221,22 @@ with tab1:
             st.markdown(msg["content"])
 
     # Voice Input Recorder Widget
-    st.write("🎙️ **Voice Assistant (Speech-to-Text):**")
-    spoken_text = speech_to_text(
-        start_prompt="Click to Speak 🎙️",
-        stop_prompt="Stop & Transcribe ⏹️",
-        language="en-US",
-        use_container_width=False,
-        key="voice_recorder",
-    )
+   # Language selector for voice input
+lang_choice = st.radio(
+    "Select speech language:",
+    ["English (India)", "Hindi (हिन्दी)"],
+    horizontal=True,
+    key="voice_lang",
+)
+selected_lang = "en-IN" if lang_choice == "English (India)" else "hi-IN"
+
+spoken_text = speech_to_text(
+    start_prompt="Click to Speak 🎙️",
+    stop_prompt="Stop & Transcribe ⏹️",
+    language=selected_lang,
+    use_container_width=False,
+    key="voice_recorder",
+)
 
     # Standard Chat Input Box
     typed_prompt = st.chat_input("Type your message or health details here...")
