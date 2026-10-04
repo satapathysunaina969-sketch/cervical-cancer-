@@ -40,7 +40,7 @@ with tab1:
         model, scaler, feature_names, threshold = None, None, None, 0.5
 
     st.warning(
-        "⚠️️ **ML Demo — Not a medical diagnosis.** "
+        "⚠️ **ML Demo — Not a medical diagnosis.** "
         "This tool estimates a risk pattern based on a research dataset. "
         "It does not replace a doctor, a Pap smear, or an HPV test. "
         "Please consult a healthcare provider for an actual diagnosis."
@@ -282,17 +282,18 @@ with tab1:
             repro_summary = ", ".join(repro_diseases) if repro_diseases else "None selected"
             context_info = f"Profile: Age {age}, Active:{sexually_active_choice}, Smokes:{smokes_choice}, Diabetes:{diabetes_choice}, Thyroid:{thyroid_choice}, Asthma:{asthma_choice}, Gynecological:{repro_summary}"
 
-            prompt_content = f"{context_info}\nUser Question: '{user_prompt}'\n\nProvide a fast, concise (under 150 words), empathetic, and accurate clinical summary addressing their query directly."
+            # Updated prompt instructing language matching & concise bullet response
+            prompt_content = f"{context_info}\nUser Query: '{user_prompt}'\n\nInstructions: Respond in the same language as the user (Hindi/Hinglish/English). Keep the response structured, clear, empathetic, and concise (under 120 words). Provide actionable advice or screening guidance."
 
-            # Fast Generation Config
+            # Increased max_output_tokens to prevent clipping in Hindi/Devanagari scripts
             fast_config = types.GenerateContentConfig(
-                max_output_tokens=300,
-                temperature=0.2,
+                max_output_tokens=1000,
+                temperature=0.3,
             )
 
             def stream_generator():
                 if not client:
-                    yield "Gemini API client is not initialized. Please ensure your GEMINI_API_KEY is configured in Streamlit Secrets."
+                    yield "Gemini API client is not initialized. Please check your GEMINI_API_KEY in Streamlit Secrets."
                     return
 
                 try:
