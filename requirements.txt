@@ -5,3 +5,4 @@ pandas
 numpy
 matplotlib
 google-genai
+streamlit-mic-recorder
