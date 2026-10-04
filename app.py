@@ -3,6 +3,7 @@ import matplotlib.pyplot as plt
 import pandas as pd
 import streamlit as st
 from google import genai
+from google.genai import types
 from streamlit_mic_recorder import speech_to_text
 
 # Page Config
@@ -39,7 +40,7 @@ with tab1:
         model, scaler, feature_names, threshold = None, None, None, 0.5
 
     st.warning(
-        "⚠️ **ML Demo — Not a medical diagnosis.** "
+        "⚠️️ **ML Demo — Not a medical diagnosis.** "
         "This tool estimates a risk pattern based on a research dataset. "
         "It does not replace a doctor, a Pap smear, or an HPV test. "
         "Please consult a healthcare provider for an actual diagnosis."
@@ -81,6 +82,27 @@ with tab1:
             smokes_years = 0.0
             smokes_packs = 0.0
 
+        # --- General Medical History ---
+        st.subheader("General Medical History")
+        diabetes_choice = st.radio(
+            "Do you have Diabetes or Pre-diabetes?",
+            ["No", "Yes"],
+            horizontal=True,
+            key="diabetes_radio",
+        )
+        thyroid_choice = st.radio(
+            "Do you have a Thyroid Disorder (Hypo/Hyperthyroidism)?",
+            ["No", "Yes"],
+            horizontal=True,
+            key="thyroid_radio",
+        )
+        asthma_choice = st.radio(
+            "Do you have Asthma or chronic respiratory issues?",
+            ["No", "Yes"],
+            horizontal=True,
+            key="asthma_radio",
+        )
+
     with col_b:
         # --- Contraceptive History ---
         st.subheader("Contraceptive History")
@@ -110,19 +132,24 @@ with tab1:
         else:
             stds_number = 0
 
-    st.markdown("---")
-    st.subheader("Medical & Gynecological History")
+        # --- Additional Chronic Conditions ---
+        st.subheader("Other Conditions")
+        hypertension_choice = st.radio(
+            "Do you have High Blood Pressure (Hypertension)?",
+            ["No", "Yes"],
+            horizontal=True,
+            key="hypertension_radio",
+        )
 
-    # Gynecological, Endocrine & General Medical Conditions
+    st.markdown("---")
+    st.subheader("Reproductive & Gynecological History")
+
+    # Gynecological & Reproductive Conditions Selection
     repro_diseases = st.multiselect(
-        "Select any diagnosed reproductive, hormonal, or general medical conditions:",
+        "Select any diagnosed reproductive, hormonal, or gynecological conditions:",
         [
             "PCOD (Polycystic Ovarian Disease)",
             "PCOS (Polycystic Ovary Syndrome)",
-            "Thyroid Disorder (Hypothyroidism / Hyperthyroidism)",
-            "Diabetes / Pre-diabetes",
-            "Asthma / Chronic Respiratory Condition",
-            "Hypertension (High Blood Pressure)",
             "Hormonal Imbalance (e.g., Estrogen dominance)",
             "Endometriosis",
             "Cervical Polyps / Chronic Cervicitis",
@@ -202,17 +229,17 @@ with tab1:
     st.caption("This tool is for educational purposes only and is not a substitute for professional medical advice.")
 
     # ---------------------------------------------------------
-    # INTEGRATED AI HEALTH ASSISTANT CHAT WITH VOICE INPUT
+    # INTEGRATED FAST AI HEALTH ASSISTANT CHAT WITH VOICE INPUT
     # ---------------------------------------------------------
     st.divider()
     st.subheader("💬 Cervical Health AI Assistant")
-    st.caption("Ask questions or speak using the microphone button below regarding symptoms, PCOD, Diabetes, Thyroid, or screening guidance.")
+    st.caption("Ask questions or speak using the microphone button below regarding symptoms, PCOD, Diabetes, Thyroid, Asthma, or screening guidance.")
 
     if "messages" not in st.session_state:
         st.session_state.messages = [
             {
                 "role": "assistant",
-                "content": "Hello! I am your Cervical Health Assistant. You can type or tap the microphone button to speak your questions about symptoms, PCOD/PCOS, Thyroid, Diabetes, or cervical cancer screening.",
+                "content": "Hello! I am your Cervical Health Assistant. Speak or type your questions about symptoms, PCOD/PCOS, Thyroid, Diabetes, Asthma, or cervical screening.",
             }
         ]
 
@@ -220,23 +247,25 @@ with tab1:
         with st.chat_message(msg["role"]):
             st.markdown(msg["content"])
 
-    # Voice Input Recorder Widget
-   # Language selector for voice input
-lang_choice = st.radio(
-    "Select speech language:",
-    ["English (India)", "Hindi (हिन्दी)"],
-    horizontal=True,
-    key="voice_lang",
-)
-selected_lang = "en-IN" if lang_choice == "English (India)" else "hi-IN"
+    # Language selection for Voice Input (English India / Hindi)
+    lang_col1, lang_col2 = st.columns([1, 2])
+    with lang_col1:
+        lang_choice = st.radio(
+            "Speech Language:",
+            ["English (India)", "Hindi (हिन्दी)"],
+            horizontal=True,
+            key="voice_lang",
+        )
+    selected_lang = "en-IN" if lang_choice == "English (India)" else "hi-IN"
 
-spoken_text = speech_to_text(
-    start_prompt="Click to Speak 🎙️",
-    stop_prompt="Stop & Transcribe ⏹️",
-    language=selected_lang,
-    use_container_width=False,
-    key="voice_recorder",
-)
+    # Voice Input Recorder Widget
+    spoken_text = speech_to_text(
+        start_prompt="Click to Speak 🎙️",
+        stop_prompt="Stop & Transcribe ⏹️",
+        language=selected_lang,
+        use_container_width=False,
+        key="voice_recorder",
+    )
 
     # Standard Chat Input Box
     typed_prompt = st.chat_input("Type your message or health details here...")
@@ -251,27 +280,15 @@ spoken_text = speech_to_text(
 
         with st.chat_message("assistant"):
             repro_summary = ", ".join(repro_diseases) if repro_diseases else "None selected"
-            context_info = f"""
-            User Profile Summary:
-            - Age: {age}
-            - Sexually Active: {sexually_active_choice}
-            - Smoking: {smokes_choice} ({smokes_years} yrs, {smokes_packs} packs/yr)
-            - Hormonal Contraceptives: {hormonal_choice} ({hormonal_years} yrs)
-            - IUD Use: {iud_choice} ({iud_years} yrs)
-            - STD History: {stds_choice} ({stds_number} total)
-            - Gynecological & Medical Conditions: {repro_summary}
-            """
+            context_info = f"Profile: Age {age}, Active:{sexually_active_choice}, Smokes:{smokes_choice}, Diabetes:{diabetes_choice}, Thyroid:{thyroid_choice}, Asthma:{asthma_choice}, Gynecological:{repro_summary}"
 
-            prompt_content = f"""
-            You are a supportive clinical information assistant specializing in cervical health, general women's health, and epidemiology education.
-            
-            {context_info}
-            
-            User Question: '{user_prompt}'
-            
-            Provide a concise, empathetic, and clear response addressing their query. If the user reported conditions like PCOD, Diabetes, Thyroid issues, or Asthma, address how those interact with overall wellness, inflammation, or hormonal health where relevant.
-            Remind users gently that statistical risk tools and AI do not replace clinical screening or medical professional advice.
-            """
+            prompt_content = f"{context_info}\nUser Question: '{user_prompt}'\n\nProvide a fast, concise (under 150 words), empathetic, and accurate clinical summary addressing their query directly."
+
+            # Fast Generation Config
+            fast_config = types.GenerateContentConfig(
+                max_output_tokens=300,
+                temperature=0.2,
+            )
 
             def stream_generator():
                 if not client:
@@ -282,6 +299,7 @@ spoken_text = speech_to_text(
                     response_stream = client.models.generate_content_stream(
                         model="gemini-3.8-flash",
                         contents=prompt_content,
+                        config=fast_config,
                     )
                     for chunk in response_stream:
                         if chunk.text:
@@ -291,6 +309,7 @@ spoken_text = speech_to_text(
                         response_stream = client.models.generate_content_stream(
                             model="gemini-3.5-flash-lite",
                             contents=prompt_content,
+                            config=fast_config,
                         )
                         for chunk in response_stream:
                             if chunk.text:
