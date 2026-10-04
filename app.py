@@ -3,6 +3,7 @@ import matplotlib.pyplot as plt
 import pandas as pd
 import streamlit as st
 from google import genai
+from streamlit_mic_recorder import speech_to_text
 
 # Page Config
 st.set_page_config(
@@ -112,13 +113,17 @@ with tab1:
     st.markdown("---")
     st.subheader("Medical & Gynecological History")
 
-    # Gynecological & Reproductive Conditions Selection
+    # Gynecological, Endocrine & General Medical Conditions
     repro_diseases = st.multiselect(
-        "Select any diagnosed reproductive, hormonal, or gynecological conditions:",
+        "Select any diagnosed reproductive, hormonal, or general medical conditions:",
         [
             "PCOD (Polycystic Ovarian Disease)",
             "PCOS (Polycystic Ovary Syndrome)",
-            "Hormonal Imbalance (e.g., Estrogen dominance, Thyroid disorders)",
+            "Thyroid Disorder (Hypothyroidism / Hyperthyroidism)",
+            "Diabetes / Pre-diabetes",
+            "Asthma / Chronic Respiratory Condition",
+            "Hypertension (High Blood Pressure)",
+            "Hormonal Imbalance (e.g., Estrogen dominance)",
             "Endometriosis",
             "Cervical Polyps / Chronic Cervicitis",
             "Pelvic Inflammatory Disease (PID)",
@@ -197,17 +202,17 @@ with tab1:
     st.caption("This tool is for educational purposes only and is not a substitute for professional medical advice.")
 
     # ---------------------------------------------------------
-    # INTEGRATED AI HEALTH ASSISTANT CHAT
+    # INTEGRATED AI HEALTH ASSISTANT CHAT WITH VOICE INPUT
     # ---------------------------------------------------------
     st.divider()
     st.subheader("💬 Cervical Health AI Assistant")
-    st.caption("Ask questions regarding your health history, PCOD/PCOS symptoms, or cervical screening guidance.")
+    st.caption("Ask questions or speak using the microphone button below regarding symptoms, PCOD, Diabetes, Thyroid, or screening guidance.")
 
     if "messages" not in st.session_state:
         st.session_state.messages = [
             {
                 "role": "assistant",
-                "content": "Hello! I am your Cervical Health Assistant. Feel free to ask about your symptoms, PCOD/PCOS, cervical cancer risk factors, or screening procedures.",
+                "content": "Hello! I am your Cervical Health Assistant. You can type or tap the microphone button to speak your questions about symptoms, PCOD/PCOS, Thyroid, Diabetes, or cervical cancer screening.",
             }
         ]
 
@@ -215,7 +220,23 @@ with tab1:
         with st.chat_message(msg["role"]):
             st.markdown(msg["content"])
 
-    if user_prompt := st.chat_input("Type your message or health details here..."):
+    # Voice Input Recorder Widget
+    st.write("🎙️ **Voice Assistant (Speech-to-Text):**")
+    spoken_text = speech_to_text(
+        start_prompt="Click to Speak 🎙️",
+        stop_prompt="Stop & Transcribe ⏹️",
+        language="en-US",
+        use_container_width=False,
+        key="voice_recorder",
+    )
+
+    # Standard Chat Input Box
+    typed_prompt = st.chat_input("Type your message or health details here...")
+
+    # Determine which input prompt was submitted (Voice or Typed)
+    user_prompt = spoken_text if spoken_text else typed_prompt
+
+    if user_prompt:
         st.session_state.messages.append({"role": "user", "content": user_prompt})
         with st.chat_message("user"):
             st.markdown(user_prompt)
@@ -230,17 +251,17 @@ with tab1:
             - Hormonal Contraceptives: {hormonal_choice} ({hormonal_years} yrs)
             - IUD Use: {iud_choice} ({iud_years} yrs)
             - STD History: {stds_choice} ({stds_number} total)
-            - Gynecological/Reproductive Conditions: {repro_summary}
+            - Gynecological & Medical Conditions: {repro_summary}
             """
 
             prompt_content = f"""
-            You are a supportive clinical information assistant specializing in cervical health and epidemiology education.
+            You are a supportive clinical information assistant specializing in cervical health, general women's health, and epidemiology education.
             
             {context_info}
             
             User Question: '{user_prompt}'
             
-            Provide a concise, empathetic, and clear response addressing their query, taking into account their reported gynecological profile (such as PCOD/PCOS/hormonal issues) if relevant.
+            Provide a concise, empathetic, and clear response addressing their query. If the user reported conditions like PCOD, Diabetes, Thyroid issues, or Asthma, address how those interact with overall wellness, inflammation, or hormonal health where relevant.
             Remind users gently that statistical risk tools and AI do not replace clinical screening or medical professional advice.
             """
 
